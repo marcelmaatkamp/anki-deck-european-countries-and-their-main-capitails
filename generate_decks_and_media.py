@@ -1,50 +1,53 @@
+#!/usr/bin/env python3
 """
-generate_decks_and_media.py
-- Vereisten:
+generate_full_decks.py
+- Maakt per taal:
+  - maps/, flags/, audio/
+  - quiz_data_{lang}.json
+  - europese_hoofdsteden_{lang}.apkg
+
+Voordat je start:
+- Zorg dat natural earth shapefile in data/ staat:
+  ne_110m_admin_0_countries.shp (met .dbf/.shx/etc.)
+- Installeer requirements:
   pip install geopandas matplotlib pandas genanki gTTS requests pycountry deep-translator Pillow
-- Download natural earth shapefile en plaats in data/
-  (ne_110m_admin_0_countries.shp en bijbehorende bestanden)
-- Run:
-  python generate_decks_and_media.py
 """
 
+from pathlib import Path
 import geopandas as gpd
 import matplotlib.pyplot as plt
-from pathlib import Path
-import pandas as pd
-import genanki
+from deep_translator import GoogleTranslator
 from gtts import gTTS
 import requests
 import pycountry
-from deep_translator import GoogleTranslator
 import json
 import time
 from PIL import Image
+import genanki
+import pandas as pd
 
-# ---------- CONFIG ----------
+# ----------------- CONFIG -----------------
 DATA_SHP = Path("data/ne_110m_admin_0_countries.shp")
-OUTPUT_BASE = Path("decks")
-LANGS = ["nl", "en", "fr", "de", "es"]  # uit te breiden
-# Kaarten DPI / grootte
+OUTPUT = Path("decks")
+
+LANGS = ["nl", "en", "fr", "de", "es"]  # uitbreidbaar
+# LANGS = ["nl"]  # uitbreidbaa
 FIGSIZE = (6, 6)
 DPI = 200
-# padding factor voor automatische zoom rondom land
 PAD_FACTOR = 0.5
-# Flag CDN URL (lowercase ISO2)
 FLAG_URL = "https://flagcdn.com/w320/{code}.png"
-# Mapping voor uitzonderlijke landen waar pycountry.lookup faalt of andere naam nodig is
-PYCOUNTRY_NAME_FIX = {
-    "Kosovo": "XK",  # flagcdn uses 'xk' sometimes; pycountry has no Kosovo in some installs
+# fallback mapping voor enkele landen
+FALLBACK_ISO = {
+    "Kosovo": "xk",
     "Vatican": "va",
     "North Macedonia": "mk",
     "Czechia": "cz",
     "Moldova": "md",
-    "Russia": "ru",
     "United Kingdom": "gb",
-    # NaturalEarth uses "Bosnia and Herz." — pycountry lookup might still work but add mapping if needed
+    "Bosnia and Herz.": "ba",
 }
 
-# Default hoofdsteden in Engels keyed by the Natural Earth NAME field
+# Engelse hoofdsteden keyed op Natural Earth NAME
 HOOFDSTEDEN_EN = {
     "Albania": "Tirana", "Andorra": "Andorra la Vella", "Austria": "Vienna", "Belarus": "Minsk",
     "Belgium": "Brussels", "Bosnia and Herz.": "Sarajevo", "Bulgaria": "Sofia", "Croatia": "Zagreb",
@@ -59,192 +62,158 @@ HOOFDSTEDEN_EN = {
     "Switzerland": "Bern", "Ukraine": "Kyiv", "United Kingdom": "London", "Vatican": "Vatican City"
 }
 
-# gTTS language fallback mapping: map our LANGS to gtts languages
-GTTS_LANG_MAP = {
-    "nl": "nl",
-    "en": "en",
-    "fr": "fr",
-    "de": "de",
-    "es": "es"
-}
+GTTS_LANG_MAP = {"nl": "nl", "en": "en", "fr": "fr", "de": "de", "es": "es"}
 
-# ---------- HELPERS ----------
-def safe_country_alpha2(name):
-    # probeer pycountry te gebruiken, val terug op mapping
+# ----------------- HELPERS -----------------
+def safe_alpha2(name):
     try:
-        # pycountry.lookup kan soms fail bij truncated names; try direct lookup or search
-        try:
-            c = pycountry.countries.lookup(name)
-            return c.alpha_2.lower()
-        except Exception:
-            # try to use mapping or fuzzy
-            if name in PYCOUNTRY_NAME_FIX:
-                code = PYCOUNTRY_NAME_FIX[name]
-                return code.lower()
-            # try searching by common_name/official_name
-            for c in pycountry.countries:
-                if hasattr(c, "common_name") and c.common_name and name.lower() in c.common_name.lower():
-                    return c.alpha_2.lower()
-                if hasattr(c, "official_name") and c.official_name and name.lower() in c.official_name.lower():
-                    return c.alpha_2.lower()
+        c = pycountry.countries.lookup(name)
+        return c.alpha_2.lower()
     except Exception:
-        pass
+        if name in FALLBACK_ISO:
+            return FALLBACK_ISO[name]
+        # search by common_name/official_name
+        for c in pycountry.countries:
+            if hasattr(c, "common_name") and c.common_name and name.lower() in c.common_name.lower():
+                return c.alpha_2.lower()
+            if hasattr(c, "official_name") and c.official_name and name.lower() in c.official_name.lower():
+                return c.alpha_2.lower()
     return None
 
-def download_flag_by_country(name, dest_path):
-    code = safe_country_alpha2(name)
+def download_flag(name, dest: Path):
+    code = safe_alpha2(name)
     if not code:
-        # fallback: try very basic conversions
-        alt = {
-            "Bosnia and Herz.": "ba",
-            "Kosovo": "xk",
-            "Vatican": "va",
-            "North Macedonia": "mk",
-            "Czechia": "cz",
-            "Moldova": "md",
-            "United Kingdom": "gb",
-        }.get(name)
-        if alt:
-            code = alt
-    if not code:
-        print(f"⚠️ Kan geen ISO2-code vinden voor {name} — geen vlag.")
+        print(f"⚠️ Geen ISO-code voor {name}, fallback mogelijk nodig")
         return False
     url = FLAG_URL.format(code=code)
     try:
-        r = requests.get(url, timeout=15)
+        r = requests.get(url, timeout=20)
         if r.status_code == 200:
-            dest_path.write_bytes(r.content)
-            # normalize image (some flags have transparent background)
+            dest.write_bytes(r.content)
+            # normalize to remove alpha channel if present
             try:
-                img = Image.open(dest_path)
-                img = img.convert("RGBA")
-                bg = Image.new("RGB", img.size, (255,255,255))
-                bg.paste(img, mask=img.split()[3] if img.mode=='RGBA' else None)
-                bg.save(dest_path, format="PNG")
-            except Exception:
+                img = Image.open(dest)
+                if img.mode == "RGBA":
+                    bg = Image.new("RGB", img.size, (255,255,255))
+                    bg.paste(img, mask=img.split()[3])
+                    bg.save(dest, format="PNG")
+            except:
                 pass
             return True
         else:
-            print(f"⚠️ Flag not found for {name} at {url} (status {r.status_code})")
+            print(f"⚠️ Flag {name} niet gevonden ({r.status_code})")
             return False
     except Exception as e:
-        print(f"⚠️ Error downloading flag for {name}: {e}")
+        print(f"⚠️ Error download flag {name}: {e}")
         return False
 
-def text_to_speech(text, lang, dest_path):
-    # gTTS expects language code like 'nl', 'fr'
-    g_lang = GTTS_LANG_MAP.get(lang, 'en')
+def text_to_speech(text, lang, dest: Path):
+    g_lang = GTTS_LANG_MAP.get(lang, "en")
     try:
         tts = gTTS(text=text, lang=g_lang)
-        tts.save(str(dest_path))
+        tts.save(str(dest))
         return True
     except Exception as e:
-        print(f"⚠️ gTTS failed for '{text}' ({lang}): {e}")
+        print(f"⚠️ gTTS faalde voor '{text}' ({lang}): {e}")
         return False
 
-# ---------- MAIN ----------
+# ----------------- MAIN -----------------
 def main():
-    print("🔁 Start genereren decks + media")
     if not DATA_SHP.exists():
-        raise SystemExit(f"Plaats de natural earth shapefile op {DATA_SHP} (ne_110m_admin_0_countries.shp)")
+        raise SystemExit(f"Plaats de Natural Earth shapefile in {DATA_SHP}")
 
+    # load vector data
     world = gpd.read_file(DATA_SHP)
-    europe = world[world['CONTINENT'] == 'Europe'].copy()
-
-    # Clean index
+    europe = world[world["CONTINENT"] == "Europe"].copy()
     europe.reset_index(drop=True, inplace=True)
 
-    # maak output structuren per taal
+    # prepare output folders
     for lang in LANGS:
-        out_dir = OUTPUT_BASE / lang
-        maps_dir = out_dir / "maps"
-        flags_dir = out_dir / "flags"
-        audio_dir = out_dir / "audio"
-        for d in (out_dir, maps_dir, flags_dir, audio_dir):
-            d.mkdir(parents=True, exist_ok=True)
+        (OUTPUT / lang / "maps").mkdir(parents=True, exist_ok=True)
+        (OUTPUT / lang / "flags").mkdir(parents=True, exist_ok=True)
+        (OUTPUT / lang / "audio").mkdir(parents=True, exist_ok=True)
+        (OUTPUT / lang / "media").mkdir(parents=True, exist_ok=True)  # unified media for genanki
 
-    # 1) genereer kaarten & download flags (EN keys)
-    print("🗺️ Genereren van kaartjes en vlaggen (EN basisnamen)...")
+    # 1) generate maps once per language (maps are same visually; stored per lang for easy packaging)
+    print("🗺️ Genereren kaarten & vlaggen...")
     for _, row in europe.iterrows():
         en_name = row["NAME"]
         if en_name not in HOOFDSTEDEN_EN:
-            # skip onbekend land (of voeg toe aan HOOFDSTEDEN_EN)
             continue
-        # *** kaart genereren ***
+
+        # generate maps per language folder
         for lang in LANGS:
-            out_map = OUTPUT_BASE / lang / "maps" / f"{en_name}.png"
-            if out_map.exists():
-                continue  # skip als al gegenereerd
-            fig, ax = plt.subplots(figsize=FIGSIZE)
-            # background europa
-            europe.plot(ax=ax, color='lightgrey', edgecolor='white', linewidth=0.5)
-            europe[europe["NAME"] == en_name].plot(ax=ax, color='red', edgecolor='black', linewidth=0.6)
-            # auto zoom op land met marge
-            minx, miny, maxx, maxy = row.geometry.bounds
-            pad_x = (maxx - minx) * PAD_FACTOR if (maxx - minx) > 0 else 1.0
-            pad_y = (maxy - miny) * PAD_FACTOR if (maxy - miny) > 0 else 1.0
-            ax.set_xlim(minx - pad_x, maxx + pad_x)
-            ax.set_ylim(miny - pad_y, maxy + pad_y)
-            ax.set_facecolor("lightblue")
-            plt.axis('off')
-            plt.title(en_name, fontsize=12)
-            fig.savefig(out_map, bbox_inches='tight', dpi=DPI)
-            plt.close(fig)
+            map_path = OUTPUT / lang / "maps" / f"{en_name}_map.png"
+            if not map_path.exists():
+                fig, ax = plt.subplots(figsize=FIGSIZE)
+                europe.plot(ax=ax, color="lightgrey", edgecolor="white", linewidth=0.5)
+                europe[europe["NAME"] == en_name].plot(ax=ax, color="red", edgecolor="black", linewidth=0.6)
+                minx, miny, maxx, maxy = row.geometry.bounds
+                pad_x = (maxx - minx) * PAD_FACTOR if (maxx - minx) > 0 else 1.0
+                pad_y = (maxy - miny) * PAD_FACTOR if (maxy - miny) > 0 else 1.0
+                ax.set_xlim(minx - pad_x, maxx + pad_x)
+                ax.set_ylim(miny - pad_y, maxy + pad_y)
+                ax.set_facecolor("lightblue")
+                plt.axis("off")
+                #plt.title(en_name, fontsize=12)
+                fig.savefig(map_path, bbox_inches="tight", dpi=DPI)
+                plt.close(fig)
 
-        # download vlag (een keer)
-        flag_path = OUTPUT_BASE / LANGS[0] / "flags" / f"{en_name}.png"
-        # save flag to the first lang dir then copy later across langs
-        if not flag_path.exists():
-            success = download_flag_by_country(en_name, flag_path)
-            if not success:
-                # create a blank placeholder
-                Image.new("RGB", (320, 200), (220, 220, 220)).save(flag_path)
-
-        # copy flag to other lang folders
+        # download flag once, copy to all languages
+        primary_flag = OUTPUT / LANGS[0] / "flags" / f"{en_name}_flag.png"
+        if not primary_flag.exists():
+            ok = download_flag(en_name, primary_flag)
+            if not ok:
+                # placeholder
+                Image.new("RGB", (320, 200), (220,220,220)).save(primary_flag)
+        # copy to others if missing
         for lang in LANGS[1:]:
-            dest = OUTPUT_BASE / lang / "flags" / f"{en_name}.png"
+            dest = OUTPUT / lang / "flags" / f"{en_name}_flag.png"
             if not dest.exists():
-                dest.write_bytes(flag_path.read_bytes())
+                dest.write_bytes(primary_flag.read_bytes())
 
-    # 2) Per taal: vertalingen, audio, anki .apkg en quiz JSON
-    print("🔉 Genereren van audio, vertalingen en Anki .apkg per taal...")
+    # 2) per language: translate, tts, copy media into media/ and create apkg + json
+    print("🔉 Genereren vertalingen, audio en Anki decks per taal...")
     for lang in LANGS:
         print(f"➡️ Taal: {lang}")
-        out_dir = OUTPUT_BASE / lang
+        out_dir = OUTPUT / lang
         maps_dir = out_dir / "maps"
         flags_dir = out_dir / "flags"
         audio_dir = out_dir / "audio"
+        media_dir = out_dir / "media"
 
-        # translator
         translator = GoogleTranslator(source='en', target=lang)
 
-        # maak genanki model + deck
+        # genanki model + deck
         model_id = 1607392319000 + abs(hash(lang)) % 1000000
         deck_id = 2050000000 + abs(hash(lang)) % 1000000
         model = genanki.Model(
             model_id,
             f"EuropaModel_{lang}",
-            fields=[{"name": "Land"}, {"name": "Hoofdstad"}, {"name": "Map"}, {"name": "Flag"}, {"name": "Audio"}],
-            templates=[
-                {
-                    "name": "Card1",
-                    "qfmt": "<div style='font-size:22px'><b>{{Land}}</b></div><div>{{Map}}</div><div>{{Flag}}</div>",
-                    "afmt": "{{FrontSide}}<hr id='answer'><div style='font-size:20px'><b>Hoofdstad:</b> {{Hoofdstad}}</div><div>{{Audio}}</div>",
-                }
+            fields=[
+                {"name": "Land"},
+                {"name": "Hoofdstad"},
+                {"name": "Map"},
+                {"name": "Flag"},
+                {"name": "Audio"},
             ],
-            css=""".card { font-family: Arial; text-align: center; } img { max-width: 360px; }"""
+            templates=[{
+                "name": "Kaart",
+                "qfmt": "<div style='font-size:22px'><div>{{Map}}{{Flag}}</div>",
+                "afmt": "{{FrontSide}}<hr id='answer'><div style='font-size:20px'>{{Land}}<br />{{Hoofdstad}}</div><div>{{Audio}}</div>"
+            }],
+            css=".card { font-family: Arial; text-align: center; } img { max-width: 360px; }"
         )
         deck = genanki.Deck(deck_id, f"Europese hoofdsteden ({lang})")
 
-        # media files list
         all_media = []
-
         quiz_items = []
 
         for en_name, en_cap in HOOFDSTEDEN_EN.items():
             if en_name not in europe["NAME"].values:
                 continue
-            # vertaal land en hoofdstad
+
+            # translate names (safe fallback to english on error)
             try:
                 land_trans = translator.translate(en_name)
             except Exception:
@@ -254,28 +223,42 @@ def main():
             except Exception:
                 cap_trans = en_cap
 
-            # audio: uitspraak van de hoofdstad (of land, maar we choose hoofdstad)
+            # audio filename
             audio_filename = f"{en_name}_{lang}.mp3"
             audio_path = audio_dir / audio_filename
+            
+            # audio content
+            audio_content = f"{land_trans}: {cap_trans}"
+            
             if not audio_path.exists():
-                ok = text_to_speech(cap_trans, lang, audio_path)
+                ok = text_to_speech(audio_content, lang, audio_path)
                 if not ok:
-                    # fallback: try english
                     text_to_speech(en_cap, "en", audio_path)
-            all_media.append(str(audio_path))
+                    
+            # copy audio into media_dir
+            media_audio = media_dir / audio_filename
+            if not media_audio.exists():
+                media_audio.write_bytes(audio_path.read_bytes())
+            all_media.append(str(media_audio))
 
-            # images: map + flag
-            map_path = maps_dir / f"{en_name}.png"
-            flag_path = flags_dir / f"{en_name}.png"
-            if map_path.exists():
-                all_media.append(str(map_path))
-            if flag_path.exists():
-                all_media.append(str(flag_path))
+            # copy map + flag into media_dir with unified names
+            map_src = maps_dir / f"{en_name}_map.png"
+            flag_src = flags_dir / f"{en_name}_flag.png"
+            map_media = media_dir / f"{en_name}_map.png"
+            flag_media = media_dir / f"{en_name}_flag.png"
+            if map_src.exists() and not map_media.exists():
+                map_media.write_bytes(map_src.read_bytes())
+            if flag_src.exists() and not flag_media.exists():
+                flag_media.write_bytes(flag_src.read_bytes())
+            if map_media.exists():
+                all_media.append(str(map_media))
+            if flag_media.exists():
+                all_media.append(str(flag_media))
 
-            # maak note voor genanki (Afbeeldingen via img src met bestandsnaam)
-            map_tag = f"<img src=\"{map_path.name}\">" if map_path.exists() else ""
-            flag_tag = f"<img src=\"{flag_path.name}\">" if flag_path.exists() else ""
-            audio_tag = f"[sound:{audio_path.name}]" if audio_path.exists() else ""
+            # create genanki note: use filenames only (Anki will use media list)
+            map_tag = f"<img src=\"{map_media.name}\" width=\"512\" height=\"512\" />" if map_media.exists() else ""
+            flag_tag = f"<img src=\"{flag_media.name}\" width=\"512\" height=\"512\" />" if flag_media.exists() else ""
+            audio_tag = f"[sound:{media_audio.name}]" if media_audio.exists() else ""
 
             note = genanki.Note(
                 model=model,
@@ -283,37 +266,36 @@ def main():
             )
             deck.add_note(note)
 
-            # quiz item
+            # quiz item JSON (paths relative to /decks/{lang}/)
             quiz_items.append({
                 "country_en": en_name,
                 "country": land_trans,
                 "capital": cap_trans,
-                "map": f"maps/{map_path.name}" if map_path.exists() else None,
-                "flag": f"flags/{flag_path.name}" if flag_path.exists() else None,
-                "audio": f"audio/{audio_path.name}" if audio_path.exists() else None,
+                "map": f"maps/{map_media.name}" if map_media.exists() else None,
+                "flag": f"flags/{flag_media.name}" if flag_media.exists() else None,
+                "audio": f"audio/{audio_filename}" if media_audio.exists() else None
             })
 
         # write apkg
         package = genanki.Package(deck)
-        # media dedupe
+        # dedupe media
         media_files = list(dict.fromkeys(all_media))
         package.media_files = media_files
         apkg_path = out_dir / f"europese_hoofdsteden_{lang}.apkg"
         package.write_to_file(str(apkg_path))
         print(f"   ✅ apkg geschreven: {apkg_path}")
 
-        # write quiz json
+        # write quiz json (used by mobile app)
         json_path = out_dir / f"quiz_data_{lang}.json"
-        with open(json_path, "w", encoding="utf-8") as f:
+        with json_path.open("w", encoding="utf-8") as f:
             json.dump(quiz_items, f, ensure_ascii=False, indent=2)
         print(f"   ✅ json geschreven: {json_path}")
 
-        # sleep kort om rate limit issues te beperken (translation / TTS)
-        time.sleep(1.2)
+        # korte pauze
+        time.sleep(0.8)
 
-    print("🎉 Gereed. Alle talen gegenereerd.")
+    print("🎉 Klaar! Alle talen gegenereerd in", OUTPUT)
 
 if __name__ == "__main__":
     main()
-
 
