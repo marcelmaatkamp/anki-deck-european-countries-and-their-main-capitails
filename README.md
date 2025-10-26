@@ -1,5 +1,9 @@
 # Anki Flashcards for European countries and their main capitals
 
+<ul>
+ <li><a href="https://github.com/marcelmaatkamp/anki-deck-european-countries-and-their-main-capitails/raw/refs/heads/master/decks/en/europese_hoofdsteden_en.apkg">EN</a></li>
+</ul>
+
 # step 1
 
 install python dependencies
