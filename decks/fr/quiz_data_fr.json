@@ -1,0 +1,306 @@
+[
+  {
+    "country_en": "Albania",
+    "country": "Albanie",
+    "capital": "Tirana",
+    "map": "maps/Albania.png",
+    "flag": "flags/Albania.png",
+    "audio": "audio/Albania_fr.mp3"
+  },
+  {
+    "country_en": "Austria",
+    "country": "Autriche",
+    "capital": "Vienne",
+    "map": "maps/Austria.png",
+    "flag": "flags/Austria.png",
+    "audio": "audio/Austria_fr.mp3"
+  },
+  {
+    "country_en": "Belarus",
+    "country": "Biélorussie",
+    "capital": "Minsk",
+    "map": "maps/Belarus.png",
+    "flag": "flags/Belarus.png",
+    "audio": "audio/Belarus_fr.mp3"
+  },
+  {
+    "country_en": "Belgium",
+    "country": "Belgique",
+    "capital": "Bruxelles",
+    "map": "maps/Belgium.png",
+    "flag": "flags/Belgium.png",
+    "audio": "audio/Belgium_fr.mp3"
+  },
+  {
+    "country_en": "Bosnia and Herz.",
+    "country": "Bosnie-Herz.",
+    "capital": "Sarajevo",
+    "map": "maps/Bosnia and Herz..png",
+    "flag": "flags/Bosnia and Herz..png",
+    "audio": "audio/Bosnia and Herz._fr.mp3"
+  },
+  {
+    "country_en": "Bulgaria",
+    "country": "Bulgarie",
+    "capital": "Sofia",
+    "map": "maps/Bulgaria.png",
+    "flag": "flags/Bulgaria.png",
+    "audio": "audio/Bulgaria_fr.mp3"
+  },
+  {
+    "country_en": "Croatia",
+    "country": "Croatie",
+    "capital": "Zagreb",
+    "map": "maps/Croatia.png",
+    "flag": "flags/Croatia.png",
+    "audio": "audio/Croatia_fr.mp3"
+  },
+  {
+    "country_en": "Czechia",
+    "country": "Tchéquie",
+    "capital": "Prague",
+    "map": "maps/Czechia.png",
+    "flag": "flags/Czechia.png",
+    "audio": "audio/Czechia_fr.mp3"
+  },
+  {
+    "country_en": "Denmark",
+    "country": "Danemark",
+    "capital": "Copenhague",
+    "map": "maps/Denmark.png",
+    "flag": "flags/Denmark.png",
+    "audio": "audio/Denmark_fr.mp3"
+  },
+  {
+    "country_en": "Estonia",
+    "country": "Estonie",
+    "capital": "Tallinn",
+    "map": "maps/Estonia.png",
+    "flag": "flags/Estonia.png",
+    "audio": "audio/Estonia_fr.mp3"
+  },
+  {
+    "country_en": "Finland",
+    "country": "Finlande",
+    "capital": "Helsinki",
+    "map": "maps/Finland.png",
+    "flag": "flags/Finland.png",
+    "audio": "audio/Finland_fr.mp3"
+  },
+  {
+    "country_en": "France",
+    "country": "France",
+    "capital": "Paris",
+    "map": "maps/France.png",
+    "flag": "flags/France.png",
+    "audio": "audio/France_fr.mp3"
+  },
+  {
+    "country_en": "Germany",
+    "country": "Allemagne",
+    "capital": "Berlin",
+    "map": "maps/Germany.png",
+    "flag": "flags/Germany.png",
+    "audio": "audio/Germany_fr.mp3"
+  },
+  {
+    "country_en": "Greece",
+    "country": "Grèce",
+    "capital": "Athènes",
+    "map": "maps/Greece.png",
+    "flag": "flags/Greece.png",
+    "audio": "audio/Greece_fr.mp3"
+  },
+  {
+    "country_en": "Hungary",
+    "country": "Hongrie",
+    "capital": "Budapest",
+    "map": "maps/Hungary.png",
+    "flag": "flags/Hungary.png",
+    "audio": "audio/Hungary_fr.mp3"
+  },
+  {
+    "country_en": "Iceland",
+    "country": "Islande",
+    "capital": "Reykjavík",
+    "map": "maps/Iceland.png",
+    "flag": "flags/Iceland.png",
+    "audio": "audio/Iceland_fr.mp3"
+  },
+  {
+    "country_en": "Ireland",
+    "country": "Irlande",
+    "capital": "Dublin",
+    "map": "maps/Ireland.png",
+    "flag": "flags/Ireland.png",
+    "audio": "audio/Ireland_fr.mp3"
+  },
+  {
+    "country_en": "Italy",
+    "country": "Italie",
+    "capital": "Rome",
+    "map": "maps/Italy.png",
+    "flag": "flags/Italy.png",
+    "audio": "audio/Italy_fr.mp3"
+  },
+  {
+    "country_en": "Kosovo",
+    "country": "Kosovo",
+    "capital": "Pristina",
+    "map": "maps/Kosovo.png",
+    "flag": "flags/Kosovo.png",
+    "audio": "audio/Kosovo_fr.mp3"
+  },
+  {
+    "country_en": "Latvia",
+    "country": "Lettonie",
+    "capital": "Riga",
+    "map": "maps/Latvia.png",
+    "flag": "flags/Latvia.png",
+    "audio": "audio/Latvia_fr.mp3"
+  },
+  {
+    "country_en": "Lithuania",
+    "country": "Lituanie",
+    "capital": "Vilnius",
+    "map": "maps/Lithuania.png",
+    "flag": "flags/Lithuania.png",
+    "audio": "audio/Lithuania_fr.mp3"
+  },
+  {
+    "country_en": "Luxembourg",
+    "country": "Luxembourg",
+    "capital": "Luxembourg",
+    "map": "maps/Luxembourg.png",
+    "flag": "flags/Luxembourg.png",
+    "audio": "audio/Luxembourg_fr.mp3"
+  },
+  {
+    "country_en": "Moldova",
+    "country": "Moldavie",
+    "capital": "Chişinău",
+    "map": "maps/Moldova.png",
+    "flag": "flags/Moldova.png",
+    "audio": "audio/Moldova_fr.mp3"
+  },
+  {
+    "country_en": "Montenegro",
+    "country": "Monténégro",
+    "capital": "Podgorica",
+    "map": "maps/Montenegro.png",
+    "flag": "flags/Montenegro.png",
+    "audio": "audio/Montenegro_fr.mp3"
+  },
+  {
+    "country_en": "Netherlands",
+    "country": "Pays-Bas",
+    "capital": "Amsterdam",
+    "map": "maps/Netherlands.png",
+    "flag": "flags/Netherlands.png",
+    "audio": "audio/Netherlands_fr.mp3"
+  },
+  {
+    "country_en": "North Macedonia",
+    "country": "Macédoine du Nord",
+    "capital": "Skopje",
+    "map": "maps/North Macedonia.png",
+    "flag": "flags/North Macedonia.png",
+    "audio": "audio/North Macedonia_fr.mp3"
+  },
+  {
+    "country_en": "Norway",
+    "country": "Norvège",
+    "capital": "Oslo",
+    "map": "maps/Norway.png",
+    "flag": "flags/Norway.png",
+    "audio": "audio/Norway_fr.mp3"
+  },
+  {
+    "country_en": "Poland",
+    "country": "Pologne",
+    "capital": "Varsovie",
+    "map": "maps/Poland.png",
+    "flag": "flags/Poland.png",
+    "audio": "audio/Poland_fr.mp3"
+  },
+  {
+    "country_en": "Portugal",
+    "country": "Portugal",
+    "capital": "Lisbonne",
+    "map": "maps/Portugal.png",
+    "flag": "flags/Portugal.png",
+    "audio": "audio/Portugal_fr.mp3"
+  },
+  {
+    "country_en": "Romania",
+    "country": "Roumanie",
+    "capital": "Bucarest",
+    "map": "maps/Romania.png",
+    "flag": "flags/Romania.png",
+    "audio": "audio/Romania_fr.mp3"
+  },
+  {
+    "country_en": "Serbia",
+    "country": "Serbie",
+    "capital": "Belgrade",
+    "map": "maps/Serbia.png",
+    "flag": "flags/Serbia.png",
+    "audio": "audio/Serbia_fr.mp3"
+  },
+  {
+    "country_en": "Slovakia",
+    "country": "Slovaquie",
+    "capital": "Bratislava",
+    "map": "maps/Slovakia.png",
+    "flag": "flags/Slovakia.png",
+    "audio": "audio/Slovakia_fr.mp3"
+  },
+  {
+    "country_en": "Slovenia",
+    "country": "Slovénie",
+    "capital": "Ljubljana",
+    "map": "maps/Slovenia.png",
+    "flag": "flags/Slovenia.png",
+    "audio": "audio/Slovenia_fr.mp3"
+  },
+  {
+    "country_en": "Spain",
+    "country": "Espagne",
+    "capital": "Madrid",
+    "map": "maps/Spain.png",
+    "flag": "flags/Spain.png",
+    "audio": "audio/Spain_fr.mp3"
+  },
+  {
+    "country_en": "Sweden",
+    "country": "Suède",
+    "capital": "Stockholm",
+    "map": "maps/Sweden.png",
+    "flag": "flags/Sweden.png",
+    "audio": "audio/Sweden_fr.mp3"
+  },
+  {
+    "country_en": "Switzerland",
+    "country": "Suisse",
+    "capital": "Berne",
+    "map": "maps/Switzerland.png",
+    "flag": "flags/Switzerland.png",
+    "audio": "audio/Switzerland_fr.mp3"
+  },
+  {
+    "country_en": "Ukraine",
+    "country": "Ukraine",
+    "capital": "Kyiv",
+    "map": "maps/Ukraine.png",
+    "flag": "flags/Ukraine.png",
+    "audio": "audio/Ukraine_fr.mp3"
+  },
+  {
+    "country_en": "United Kingdom",
+    "country": "Royaume-Uni",
+    "capital": "Londres",
+    "map": "maps/United Kingdom.png",
+    "flag": "flags/United Kingdom.png",
+    "audio": "audio/United Kingdom_fr.mp3"
+  }
+]

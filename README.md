@@ -5,7 +5,7 @@
 install python dependencies
 
 ```bash
-pip install geopandas matplotlib pandas deep-translator pycountry
+pip install geopandas matplotlib pandas genanki gTTS requests pycountry deep-translator Pillow
 ```
 
 # step 2 
@@ -22,5 +22,5 @@ unzip ne_110m_admin_0_countries.zip -d data/
 generate anki flashcards
 
 ```bash
-python generate.py
+python generate_decks_and_media.py
 ```
