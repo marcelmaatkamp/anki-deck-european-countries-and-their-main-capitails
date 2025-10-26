@@ -34,7 +34,7 @@ LANGS = ["nl", "en", "fr", "de", "es"]  # uitbreidbaar
 # LANGS = ["nl"]  # uitbreidbaa
 FIGSIZE = (6, 6)
 DPI = 200
-PAD_FACTOR = 0.5
+PAD_FACTOR = 2.5
 FLAG_URL = "https://flagcdn.com/w320/{code}.png"
 # fallback mapping voor enkele landen
 FALLBACK_ISO = {
